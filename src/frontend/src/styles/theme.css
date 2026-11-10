@@ -1,0 +1,718 @@
+.app-shell,
+.login-app {
+  --page-bg: #f5f5f5;
+  --surface: #ffffff;
+  --surface-muted: #f2f2f2;
+  --surface-input: #ffffff;
+  --border: #d4d4d4;
+  --border-muted: #e5e5e5;
+  --text: #171717;
+  --text-soft: #4b4b4b;
+  --text-muted: #747474;
+  --accent: #c9104c;
+  --accent-strong: #ed145b;
+  --accent-soft: #fde5ee;
+  --primary-button-bg: #ed145b;
+  --primary-button-hover: #c9104c;
+  --primary-button-text: #000;
+  --focus: #a80c3e;
+  background: var(--page-bg);
+  color: var(--text);
+}
+.app-shell[data-theme="dark"],
+.login-app[data-theme="dark"] {
+  --page-bg: #0c0c0c;
+  --surface: #171717;
+  --surface-muted: #222222;
+  --surface-input: #1b1b1b;
+  --border: #3b3b3b;
+  --border-muted: #2d2d2d;
+  --text: #f7f7f7;
+  --text-soft: #d0d0d0;
+  --text-muted: #a8a8a8;
+  --accent: #ff5c91;
+  --accent-strong: #ed145b;
+  --accent-soft: #4a1028;
+  --primary-button-bg: #ed145b;
+  --primary-button-hover: #ff5c91;
+  --primary-button-text: #000;
+  --focus: #ff8bb5;
+}
+.app-shell .topbar {
+  background: var(--surface);
+  border-color: var(--border);
+}
+.app-shell .brand > span {
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.app-shell .account > span, .app-shell .page-heading p {
+  color: var(--text-soft);
+}
+.app-shell .breadcrumb ol {
+  color: var(--text-muted);
+}
+.app-shell .breadcrumb li + li::before {
+  color: var(--text-muted);
+}
+.app-shell .breadcrumb a {
+  color: var(--accent);
+}
+.app-shell .breadcrumb [aria-current="page"] {
+  color: var(--text-soft);
+}
+.app-shell .topnav a {
+  color: var(--text-muted);
+}
+.app-shell .topnav a.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.app-shell .text-button {
+  color: var(--text-soft);
+}
+.app-shell .theme-switcher {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+.app-shell .theme-option {
+  color: var(--text-soft);
+}
+.app-shell .theme-option[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--accent);
+}
+.app-shell .theme-option:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--accent);
+}
+.app-shell .workspace {
+  background: var(--page-bg);
+}
+.app-shell .panel, .app-shell .finding, .app-shell .stats, .app-shell .secondary {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+.app-shell input {
+  background: var(--surface-input);
+  border-color: var(--border);
+  color: var(--text);
+}
+.app-shell input::placeholder, .app-shell small, .app-shell .muted {
+  color: var(--text-muted);
+}
+.app-shell .section-number, .app-shell .form-action, .app-shell .finding-detail {
+  border-color: var(--border-muted);
+}
+.app-shell .section-number span, .app-shell .finding h4 {
+  color: var(--text);
+}
+.app-shell .readonly-value {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+.app-shell .scope-card {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+.app-shell .scope-card li {
+  color: var(--text-soft);
+}
+.app-shell .scope-card .scope-note {
+  border-color: var(--border);
+}
+.app-shell .app-footer {
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+.app-shell .secondary:hover:not(:disabled), .app-shell .finding summary:hover {
+  background: var(--surface-muted);
+}
+.app-shell .stats span, .app-shell .finding summary p, .app-shell .finding-detail p {
+  color: var(--text-soft);
+}
+.app-shell .finding-detail pre {
+  background: var(--surface-input);
+  border-color: var(--border);
+  color: var(--text);
+}
+.app-shell .code-block {
+  border-color: var(--border);
+  background: var(--surface-input);
+}
+.app-shell .code-block-header {
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+.app-shell .java-code {
+  background: var(--surface-input);
+  color: var(--text);
+}
+.app-shell .java-code .token.comment { color: #8da18f; }
+.app-shell .java-code .token.keyword { color: #d4a8ee; }
+.app-shell .java-code .token.string { color: #e8b17e; }
+.app-shell .java-code .token.number { color: #8bc9de; }
+.app-shell .java-code .token.class-name,
+.app-shell .java-code .token.function { color: #9dd8b2; }
+.app-shell .java-code .token.operator,
+.app-shell .java-code .token.punctuation { color: #bdcabb; }
+.app-shell .ai-assessment {
+  border-color: #43634b;
+  border-left-color: #9ac7a2;
+  background: #202d24;
+  color: #edf4ed;
+}
+.app-shell .ai-assessment-heading {
+  border-color: #354b3b;
+}
+.app-shell .ai-kicker {
+  color: #9ac7a2;
+}
+.app-shell .ai-assessment h5 {
+  color: #edf4ed;
+}
+.app-shell .ai-consultive {
+  border-color: #52765b;
+  color: #b8d9bd;
+}
+.app-shell .ai-assessment-summary > div {
+  border-color: #3d5443;
+  background: #29382d;
+}
+.app-shell .ai-assessment-summary span,
+.app-shell .ai-assessment-copy p {
+  color: #b5c3b6;
+}
+.app-shell .ai-assessment-summary strong {
+  color: #edf4ed;
+}
+.app-shell .ai-assessment-copy h6 {
+  color: #c8dfcb;
+}
+.app-shell .ai-assessment-meta {
+  border-color: #354b3b;
+  color: #a7b9a9;
+}
+.app-shell .result-footer, .app-shell .findings-heading > span {
+  color: var(--text-muted);
+}
+/* O dashboard usa a mesma linguagem visual nos dois modos. */
+.app-shell .dashboard-page {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.app-shell .dashboard-title h1 {
+  color: var(--accent);
+}
+.app-shell .dashboard-title p, .app-shell .dashboard-card h2 {
+  color: var(--text-soft);
+}
+.app-shell .dashboard-title button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.app-shell .dashboard-stats, .app-shell .dashboard-card {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+.app-shell .dashboard-stats > div, .app-shell .files-card li {
+  border-color: var(--border);
+}
+.app-shell .dashboard-stats span, .app-shell .dashboard-list-empty, .app-shell .severity-legend span {
+  color: var(--text-muted);
+}
+.app-shell .dashboard-stats strong, .app-shell .severity-legend b {
+  color: var(--text);
+}
+.app-shell .trend-chart line {
+  stroke: var(--border);
+}
+.app-shell .dashboard-last {
+  border-color: var(--border);
+  color: var(--text-soft);
+}
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #142018aa;
+}
+.dashboard-modal {
+  position: relative;
+  width: min(100%, 430px);
+  padding: 34px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 18px 55px #0b120d44;
+}
+.dashboard-modal h2 {
+  margin: 17px 0 9px;
+  font-size: 22px;
+}
+.dashboard-modal p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.modal-icon {
+  display: block;
+  color: var(--accent);
+}
+.modal-icon svg {
+  width: 28px;
+  height: 32px;
+}
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 3px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 24px;
+  line-height: 1;
+}
+.modal-close:hover:not(:disabled) {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+.modal-actions button {
+  font-size: 12px;
+  padding: 10px 15px;
+}
+.systems-section {
+  margin-top: 34px;
+}
+.systems-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.systems-heading h2 {
+  margin: 6px 0 0;
+  font-size: 20px;
+  color: var(--text);
+}
+.systems-heading > span {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.systems-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+.system-card {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  color: var(--text);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 300px;
+}
+.system-card:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--surface);
+  transform: translateY(-1px);
+}
+.system-card-top {
+  width: 100%;
+  min-height: 112px;
+}
+.system-card-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.system-kicker {
+  color: var(--text-muted);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.system-card h3 {
+  margin: 12px 0 4px;
+  font-size: 18px;
+  line-height: 1.25;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.system-card-top p {
+  margin: 0;
+  color: var(--text-soft);
+  font: 11px monospace;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.system-count {
+  color: var(--accent);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.system-latest {
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  width: 100%;
+}
+.system-latest span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.system-latest strong {
+  color: var(--text);
+  font-size: 13px;
+}
+.system-latest small {
+  color: var(--text-soft);
+  font-size: 10px;
+  line-height: 1.4;
+  margin: 0;
+}
+.history-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  padding: 7px 0;
+  font-size: 11px;
+}
+.history-toggle:hover:not(:disabled) {
+  background: transparent;
+  color: var(--text);
+}
+.system-history {
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.system-history h4 {
+  margin: 0 0 8px;
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 600;
+}
+.history-entry {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 8px;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 0;
+  color: var(--text);
+}
+.history-entry:last-child {
+  border-bottom: 0;
+}
+.history-entry span, .history-entry small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.history-entry strong {
+  font-size: 11px;
+  color: var(--text-soft);
+}
+.history-entry b {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  color: var(--accent);
+}
+.history-entry:hover:not(:disabled) {
+  background: var(--surface);
+}
+.history-more {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--accent);
+  font-size: 10px;
+}
+.history-error, .systems-empty, .systems-pagination {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.systems-empty {
+  padding: 22px 0;
+}
+.systems-pagination {
+  text-align: center;
+  margin: 17px 0 0;
+}
+.system-open {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 11px;
+}
+.system-dashboard-heading {
+  margin-bottom: 20px;
+}
+.system-dashboard-heading h1 {
+  margin: 8px 0 6px;
+  color: var(--text);
+  font-size: 28px;
+  overflow-wrap: anywhere;
+}
+.system-dashboard-heading p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 12px;
+}
+.back-link {
+  border: 0;
+  padding: 0;
+  margin-bottom: 18px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 11px;
+}
+.back-link:hover:not(:disabled) {
+  background: transparent;
+  color: var(--text);
+}
+.system-history {
+  margin-top: 22px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.system-history-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.system-history-heading span {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+.system-history-heading small {
+  color: var(--text-muted);
+  font-size: 10px;
+  text-align: right;
+}
+.system-history-list {
+  display: grid;
+  grid-auto-columns: max-content;
+  grid-auto-flow: column;
+  justify-content: start;
+  gap: 7px;
+  margin-top: 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 2px 2px 9px;
+  direction: rtl;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Componentes que antes tinham uma paleta própria agora consomem os tokens da marca. */
+.app-shell .panel,
+.app-shell .finding,
+.app-shell .stats,
+.app-shell .secondary,
+.app-shell .result-view-switch button,
+.app-shell .analysis-trend,
+.app-shell .dashboard-stats,
+.app-shell .dashboard-card {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+.app-shell .vulnerability-status {
+  background: var(--surface-muted);
+  border-color: var(--border);
+  color: var(--text);
+}
+.app-shell .vulnerability-status-heading h5 {
+  color: var(--text);
+}
+.app-shell .vulnerability-status-form label {
+  color: var(--text-muted);
+}
+.app-shell .vulnerability-status-form select,
+.app-shell .vulnerability-status-form textarea {
+  background: var(--surface-input);
+  border-color: var(--border);
+  color: var(--text);
+}
+.app-shell .vulnerability-status-form button {
+  background: var(--primary-button-bg);
+  color: var(--primary-button-text);
+}
+.app-shell .status-consultive {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.app-shell .section-number,
+.app-shell .form-action,
+.app-shell .scope-card .scope-note,
+.app-shell .app-footer,
+.app-shell .stats > div,
+.app-shell .finding-detail,
+.app-shell .ai-assessment-heading,
+.app-shell .ai-assessment-meta,
+.app-shell .ai-assessment-summary > div,
+.app-shell .files-card li,
+.app-shell .suggestions-card li,
+.app-shell .detected-card li,
+.app-shell .analysis-trend th,
+.app-shell .analysis-trend td {
+  border-color: var(--border);
+}
+.app-shell .section-number,
+.app-shell .optional,
+.app-shell .readonly-value span,
+.app-shell .scope-card > p,
+.app-shell .scope-card li > span,
+.app-shell .repository,
+.app-shell .ref,
+.app-shell .stats span,
+.app-shell .file-group > h3,
+.app-shell .findings-heading > span,
+.app-shell .analysis-trend-heading small,
+.app-shell .analysis-trend-note,
+.app-shell .analysis-trend td small,
+.app-shell .dashboard-stats span,
+.app-shell .dashboard-stats small,
+.app-shell .dashboard-list-empty,
+.app-shell .dashboard-empty,
+.app-shell .dashboard-card-note,
+.app-shell .trend-labels,
+.app-shell .files-card li,
+.app-shell .files-card li small,
+.app-shell .detected-card li,
+.app-shell .detected-card li p {
+  color: var(--text-muted);
+}
+.app-shell .section-number span,
+.app-shell .scope-card li,
+.app-shell .secondary,
+.app-shell .dashboard-stats strong,
+.app-shell .analysis-trend-heading h2,
+.app-shell .analysis-trend td,
+.app-shell .severity-donut span,
+.app-shell .severity-legend b {
+  color: var(--text);
+}
+.app-shell .readonly-value,
+.app-shell .scope-card,
+.app-shell .secondary:hover:not(:disabled),
+.app-shell .result-view-switch button:hover:not(:disabled),
+.app-shell .dashboard-last:hover:not(:disabled) {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+.app-shell .scope-card > svg,
+.app-shell .form-action button:focus-visible,
+.app-shell .analysis-notification-indicator,
+.app-shell .dashboard-title h1,
+.app-shell .dashboard-card h2,
+.app-shell .topnav a.active,
+.app-shell .back-link,
+.app-shell .system-count,
+.app-shell .system-open,
+.app-shell .history-toggle {
+  color: var(--accent);
+}
+.app-shell .form-action button,
+.app-shell .dashboard-title button,
+.app-shell .system-history-list button.selected,
+.app-shell .result-view-switch button.active,
+.app-shell .result-view-switch button[aria-pressed="true"] {
+  background: var(--primary-button-bg);
+  border-color: var(--primary-button-bg);
+  color: var(--primary-button-text);
+}
+.app-shell .form-action button:hover:not(:disabled),
+.app-shell .dashboard-title button:hover:not(:disabled) {
+  background: var(--primary-button-hover);
+  border-color: var(--primary-button-hover);
+}
+.app-shell .topnav a.active { border-bottom-color: var(--accent); }
+.app-shell .trend-chart polyline { stroke: var(--accent); }
+.app-shell .trend-chart .trend-area { fill: var(--accent); }
+.app-shell .trend-chart circle { fill: var(--accent); stroke: var(--accent-soft); }
+.app-shell .trend-chart line { stroke: var(--border); }
+.app-shell .dashboard-empty > span {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.app-shell .ai-assessment {
+  border-color: var(--border);
+  border-left-color: var(--accent);
+  background: var(--surface-muted);
+  color: var(--text);
+}
+.app-shell .ai-kicker,
+.app-shell .ai-consultive,
+.app-shell .ai-assessment-copy h6 { color: var(--accent); }
+.app-shell .ai-consultive { border-color: var(--accent); }
+.app-shell .ai-assessment-summary > div,
+.app-shell .finding-detail pre,
+.app-shell .java-code,
+.app-shell .code-block { background: var(--surface-input); }
+.app-shell .ai-assessment-summary span,
+.app-shell .ai-assessment-copy p,
+.app-shell .ai-assessment-meta { color: var(--text-soft); }
+.app-shell .ai-assessment-summary strong,
+.app-shell .ai-assessment h5 { color: var(--text); }
+.app-shell .java-code .token.comment { color: var(--text-muted); }
+.app-shell .java-code .token.keyword { color: var(--accent); }
+.app-shell .java-code .token.string { color: #9d4e00; }
+.app-shell .java-code .token.number { color: #006b83; }
+.app-shell .java-code .token.class-name,
+.app-shell .java-code .token.function { color: #7246a3; }
+.app-shell .java-code .token.operator,
+.app-shell .java-code .token.punctuation { color: var(--text-soft); }
+.app-shell[data-theme="dark"] .java-code .token.string { color: #ffba78; }
+.app-shell[data-theme="dark"] .java-code .token.number { color: #7ed8ed; }
+.app-shell[data-theme="dark"] .java-code .token.class-name,
+.app-shell[data-theme="dark"] .java-code .token.function { color: #d2a5ff; }
+.app-shell .modal-backdrop { background: #000000b8; }
+.app-shell .dashboard-modal,
+.app-shell .analysis-failure-modal { box-shadow: 0 18px 55px #00000066; }

@@ -1,0 +1,580 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api, ApiError } from "./api";
+import { AnalysisNotificationCenter } from "./AnalysisNotificationCenter";
+import type { AnalysisNotification } from "./AnalysisNotificationCenter";
+import {
+  AnalysisForm,
+  AnalysisFailureModal,
+  Dashboard,
+  DashboardPrompt,
+  ErrorMessage,
+  FisastLogo,
+  Login,
+  Processing,
+  Results,
+  SystemDashboard,
+} from "./components";
+import type { Analysis, HistoryEntry, Session, SystemsPage, VulnerabilityResponse } from "./types";
+import { priorityLabel } from "./resultModel";
+import { setLocale, t } from "./i18n";
+
+type Theme = "light" | "dark";
+const THEME_STORAGE_KEY = "sast-theme";
+const LAST_ANALYSIS_KEY = "sast-last-analysis";
+
+function analysisStageTitle(stage?: Analysis["stage"] | string) {
+  switch (stage) {
+    case "DOWNLOADING": return t("Acessando repositório");
+    case "DETERMINISTIC": return t("Analisando arquivos Java");
+    case "SEMANTIC": return t("Avaliando vulnerabilidades/melhorias identificadas");
+    case "SUGGESTIONS": return t("Buscando vulnerabilidades/melhorias adicionais");
+    case "COMPLETED": return t("Análise concluída");
+    case "FAILED": return t("Análise interrompida");
+    default: return t("Preparando análise");
+  }
+}
+
+function analysisStageMessage(data: Analysis) {
+  if (data.stage === "DETERMINISTIC" && data.filesTotal != null) {
+    const total = data.filesTotal;
+    const processed = data.filesProcessed ?? 0;
+    const milestone = total > 0 ? Math.floor((processed / total) * 10) * 10 : 0;
+    return `Arquivos Java processados: ${processed} de ${total} (${milestone}% concluído).`;
+  }
+  if (data.stage === "DOWNLOADING") return t("Obtendo os arquivos públicos do repositório com segurança.");
+  if (data.stage === "SEMANTIC") return "As vulnerabilidades e melhorias das regras já estão disponíveis enquanto a IA avalia os achados.";
+  if (data.stage === "SUGGESTIONS") return "A IA está verificando métodos candidatos para vulnerabilidades e melhorias adicionais.";
+  return t("A análise está avançando. Os resultados aparecem nesta página.");
+}
+
+function readTheme(): Theme {
+  try {
+    return localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function readLastAnalysisId(): string | null {
+  try {
+    return sessionStorage.getItem(LAST_ANALYSIS_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function storeLastAnalysisId(analysisId: string | null) {
+  try {
+    if (analysisId) sessionStorage.setItem(LAST_ANALYSIS_KEY, analysisId);
+    else sessionStorage.removeItem(LAST_ANALYSIS_KEY);
+  } catch {
+    // A restauração é opcional quando o armazenamento não está disponível.
+  }
+}
+
+export function App() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [localeReady, setLocaleReady] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [path, setPath] = useState(location.pathname);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [result, setResult] = useState<Analysis>();
+  const [systems, setSystems] = useState<SystemsPage>();
+  const [systemHistory, setSystemHistory] = useState<HistoryEntry[]>([]);
+  const [systemHistoryTotal, setSystemHistoryTotal] = useState(0);
+  const [systemHistoryPage, setSystemHistoryPage] = useState(0);
+  const [systemKey, setSystemKey] = useState<{ owner: string; repository: string }>();
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [systemUpdating, setSystemUpdating] = useState(false);
+  const [theme, setTheme] = useState<Theme>(readTheme);
+  const [dashboardPromptOpen, setDashboardPromptOpen] = useState(false);
+  const [analysisFailureOpen, setAnalysisFailureOpen] = useState(false);
+  const [analysisNotifications, setAnalysisNotifications] = useState<AnalysisNotification[]>([]);
+  const [notificationAnnouncement, setNotificationAnnouncement] = useState("");
+  const dashboardLinkRef = useRef<HTMLAnchorElement>(null);
+  const pending = useRef(false);
+  const generation = useRef(0);
+  const upsertNotification = useCallback((notification: AnalysisNotification) => {
+    setAnalysisNotifications((current) => {
+      const index = current.findIndex((item) => item.id === notification.id);
+      if (index < 0) return [...current, notification];
+      const next = [...current];
+      next[index] = notification;
+      return next;
+    });
+  }, []);
+  const dismissNotification = useCallback((id: string) => {
+    setAnalysisNotifications((current) => current.filter((item) => item.id !== id));
+  }, []);
+  const clearAnalysisNotifications = useCallback(() => {
+    setAnalysisNotifications([]);
+    setNotificationAnnouncement("");
+  }, []);
+  const loadSystems = useCallback(async (page = 0) => {
+    if (typeof api.systems !== "function") return undefined;
+    const value = await api.systems(page);
+    setSystems(value);
+    return value;
+  }, []);
+  const navigate = useCallback((next: string, replace = false) => {
+    if (replace) history.replaceState(null, "", next);
+    else history.pushState(null, "", next);
+    setPath(next);
+  }, []);
+  useEffect(() => {
+    if (typeof api.config !== "function") { setLocale("pt-BR"); setLocaleReady(true); return; }
+    api.config().then((value) => setLocale(value.locale)).catch(() => setLocale("pt-BR")).finally(() => setLocaleReady(true));
+  }, []);
+  useEffect(() => {
+    const pop = () => {
+      generation.current++;
+      setPath(location.pathname);
+      setError("");
+      setResult(undefined);
+      setSystemHistory([]);
+      setSystemHistoryTotal(0);
+      setSystemHistoryPage(0);
+      setSystemKey(undefined);
+    };
+    addEventListener("popstate", pop);
+    return () => removeEventListener("popstate", pop);
+  }, []);
+  useEffect(() => {
+    let active = true;
+    api
+      .session()
+      .then((user) => {
+        if (!active) return;
+        setSession(user);
+        if (typeof api.systems !== "function") {
+          if (location.pathname === "/login" || location.pathname === "/") navigate("/analyses/new", true);
+          return;
+        }
+        loadSystems().then((value) => {
+          if (!active) return;
+          if (location.pathname === "/login" || location.pathname === "/")
+            navigate(value?.totalSystems ? "/dashboard" : "/analyses/new", true);
+          else if (location.pathname === "/dashboard" && !value?.totalSystems)
+            navigate("/analyses/new", true);
+        }).catch(failure);
+      })
+      .catch((e) => {
+        if (!active) return;
+        if (!(e instanceof ApiError && e.status === 401)) setError(e.message);
+        navigate(location.pathname === "/cadastro" ? "/cadastro" : "/login", true);
+      })
+      .finally(() => {
+        if (active) setReady(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [navigate, loadSystems]);
+  const failure = useCallback(
+    (e: unknown) => {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Não foi possível concluir a solicitação.",
+      );
+      if (e instanceof ApiError && e.status === 401) {
+        generation.current++;
+        setLoading(false);
+        setResult(undefined);
+        setSession(null);
+        navigate("/login", true);
+      }
+    },
+    [navigate],
+  );
+  useEffect(() => {
+    if (!session) return;
+    const systemMatch = path.match(/^\/systems\/([^/]+)\/([^/]+)$/);
+    if (systemMatch) {
+      const owner = decodeURIComponent(systemMatch[1]);
+      const repository = decodeURIComponent(systemMatch[2]);
+      if (systemKey?.owner === owner && systemKey.repository === repository && result) return;
+      setSystemKey({ owner, repository });
+      let active = true;
+      setSystemUpdating(true);
+      api.history(owner, repository).then((page) => {
+        if (!active) return;
+        setSystemHistory(page.history);
+        setSystemHistoryTotal(page.total);
+        setSystemHistoryPage(0);
+        const selected = page.history[0];
+        if (!selected) throw new Error("Este sistema ainda não possui análises.");
+        return api.analysis(selected.analysisId);
+      }).then((value) => {
+        if (active && value) setResult(value);
+      }).catch((e) => active && failure(e)).finally(() => active && setSystemUpdating(false));
+      return () => { active = false; };
+    }
+    if (path === "/dashboard") {
+      if (systems) return;
+      if (typeof api.systems === "function") {
+        let active = true;
+        setLoading(true);
+        loadSystems().catch((e) => active && failure(e)).finally(() => active && setLoading(false));
+        return () => { active = false; };
+      }
+      if (result) return;
+      const analysisId = readLastAnalysisId();
+      if (!analysisId) {
+        navigate("/analyses/new", true);
+        return;
+      }
+      let active = true;
+      setLoading(true);
+      api
+        .analysis(analysisId)
+        .then((value) => {
+          if (active) {
+            setResult(value);
+            setLoading(false);
+          }
+        })
+        .catch((e) => {
+          if (!active) return;
+          storeLastAnalysisId(null);
+          failure(e);
+          if (!(e instanceof ApiError && e.status === 401))
+            navigate("/analyses/new", true);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+      return () => {
+        active = false;
+      };
+    }
+    const match = path.match(/^\/analyses\/([^/]+)$/);
+    if (!match || match[1] === "new") {
+      if (path !== "/analyses/new") navigate("/analyses/new", true);
+      return;
+    }
+    if (result?.analysisId === match[1]) return;
+    let active = true;
+    setLoading(true);
+    api
+      .analysis(match[1])
+      .then((value) => {
+        if (active) {
+          setResult(value);
+          storeLastAnalysisId(value.analysisId);
+          setLoading(false);
+        }
+      })
+      .catch((e) => {
+        if (active) failure(e);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [path, session, systems, result?.analysisId, navigate, failure, loadSystems]);
+  async function login(email: string, password: string) {
+    setError("");
+    setSuccess("");
+    try {
+      const value = await api.login(email, password);
+      setSession(value);
+      if (typeof api.systems !== "function") navigate("/analyses/new", true);
+      else {
+        const page = await loadSystems();
+        navigate(page?.totalSystems ? "/dashboard" : "/analyses/new", true);
+      }
+    } catch (e) {
+      failure(e);
+    }
+  }
+  async function register(email: string, password: string) {
+    setError("");
+    try {
+      await api.register(email, password);
+      setSuccess("Cadastro realizado com sucesso. Faça login para continuar.");
+      navigate("/login", true);
+    } catch (e) {
+      failure(e);
+    }
+  }
+  async function create(url: string, reference: string) {
+    if (pending.current) return;
+    pending.current = true;
+    setSubmitting(true);
+    setError("");
+    setResult(undefined);
+    setNotificationAnnouncement("Preparando análise. Solicitando a análise do repositório.");
+    upsertNotification({ id: "analysis-submission", title: "Preparando análise", message: "Solicitando a análise do repositório…", tone: "progress" });
+    const operation = ++generation.current;
+    try {
+      const data = await api.create(url, reference);
+      if (generation.current === operation) {
+        dismissNotification("analysis-submission");
+        setResult(data);
+        storeLastAnalysisId(data.analysisId);
+        if (typeof api.systems === "function") loadSystems().catch(() => undefined);
+        navigate(`/analyses/${data.analysisId}`);
+      }
+    } catch (e) {
+      if (generation.current === operation) {
+        const message = e instanceof Error ? e.message : "Não foi possível concluir a solicitação.";
+        upsertNotification({ id: "analysis-submission", title: "Não foi possível iniciar a análise", message, tone: "error", final: true });
+        setNotificationAnnouncement(`Não foi possível iniciar a análise. ${message}`);
+        failure(e);
+      }
+    } finally {
+      pending.current = false;
+      setSubmitting(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!session) return;
+    let active = true;
+    let timer: number | undefined;
+    const pollTasks = async () => {
+      try {
+        const tasks = await api.tasks();
+        if (!active) return;
+        const systemMatch = window.location.pathname.match(/^\/systems\/([^/]+)\/([^/]+)$/);
+        const systemOwner = systemMatch ? decodeURIComponent(systemMatch[1]) : undefined;
+        const systemRepository = systemMatch ? decodeURIComponent(systemMatch[2]) : undefined;
+        for (const task of tasks) {
+          dismissNotification("analysis-submission");
+          if (task.status === "PROCESSING") {
+            upsertNotification({
+              id: `analysis:task:${task.analysisId}`,
+              title: analysisStageTitle(task.stage),
+              message: `Acompanhando análise de ${task.repositoryUrl.replace("https://github.com/", "")}…`,
+              tone: "progress",
+            });
+            if (window.location.pathname.endsWith(task.analysisId)) setResult(await api.analysis(task.analysisId));
+            if (systemOwner && systemRepository && task.repositoryUrl === `https://github.com/${systemOwner}/${systemRepository}`) {
+              const systemPage = await api.history(systemOwner, systemRepository);
+              if (!active) return;
+              setSystemHistory(systemPage.history);
+              setSystemHistoryTotal(systemPage.total);
+              setResult(await api.analysis(task.analysisId));
+            }
+            continue;
+          }
+          const completed = await api.analysis(task.analysisId);
+          if (!active) return;
+          if (window.location.pathname.endsWith(task.analysisId)) setResult(completed);
+          if (systemOwner && systemRepository && task.repositoryUrl === `https://github.com/${systemOwner}/${systemRepository}`) {
+            const systemPage = await api.history(systemOwner, systemRepository);
+            if (!active) return;
+            setSystemHistory(systemPage.history);
+            setSystemHistoryTotal(systemPage.total);
+            setResult(completed);
+          }
+          const summary = completed.resultSummary ?? task.resultSummary;
+          const highest = summary?.highestPriority ? priorityLabel(summary.highestPriority) : t("Sem classificação");
+          const message = task.status === "FAILED"
+            ? "A análise foi interrompida. Consulte os detalhes para ver o motivo."
+            : summary?.total
+            ? `${summary.total} vulnerabilidade(s)/melhoria(s) identificada(s). Maior prioridade: ${highest}.`
+            : "Nenhuma vulnerabilidade ou melhoria foi identificada.";
+          upsertNotification({ id: `analysis:task:${task.analysisId}`, title: task.status === "FAILED" ? "Análise interrompida" : "Análise concluída", message, tone: task.status === "FAILED" ? "error" : "success", final: true });
+          setNotificationAnnouncement(`${task.status === "FAILED" ? "Análise interrompida." : "Análise concluída."} ${message}`);
+          await api.acknowledgeTask(task.analysisId);
+          if (typeof api.systems === "function") loadSystems().catch(() => undefined);
+        }
+      } catch (e) {
+        if (active && e instanceof ApiError && e.status === 401) failure(e);
+      } finally {
+        if (active) timer = window.setTimeout(pollTasks, 2000);
+      }
+    };
+    pollTasks();
+    return () => { active = false; if (timer !== undefined) window.clearTimeout(timer); };
+     }, [session, dismissNotification, upsertNotification, failure, loadSystems]);
+  useEffect(() => {
+    if (result?.status === "FAILED") setAnalysisFailureOpen(true);
+  }, [result?.analysisId, result?.status]);
+  async function logout() {
+    if (loading) return;
+    try {
+      await api.logout();
+      generation.current++;
+      setSession(null);
+      setResult(undefined);
+      clearAnalysisNotifications();
+      setSystems(undefined);
+      storeLastAnalysisId(null);
+      setError("");
+      navigate("/login", true);
+    } catch (e) {
+      failure(e);
+    }
+  }
+  function newAnalysis() {
+    setError("");
+    setResult(undefined);
+    clearAnalysisNotifications();
+    setSubmitting(false);
+    setAnalysisFailureOpen(false);
+    setDashboardPromptOpen(false);
+    navigate("/analyses/new");
+    requestAnimationFrame(() => document.getElementById("repository-url")?.focus());
+  }
+  function dashboard() {
+    setError("");
+    if (result || systems?.totalSystems) navigate("/dashboard");
+    else setDashboardPromptOpen(true);
+  }
+  function openSystem(owner: string, repository: string) {
+    setError("");
+    setResult(undefined);
+    setSystemHistory([]);
+    setSystemHistoryTotal(0);
+    setSystemHistoryPage(0);
+    navigate(`/systems/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}`);
+  }
+  function loadMoreSystemHistory() {
+    if (!systemKey) return;
+    const nextPage = systemHistoryPage + 1;
+    setSystemUpdating(true);
+    api.history(systemKey.owner, systemKey.repository, nextPage).then((page) => {
+      setSystemHistory((current) => [...current, ...page.history]);
+      setSystemHistoryPage(nextPage);
+    }).catch(failure).finally(() => setSystemUpdating(false));
+  }
+  function changeSystemsPage(page: number) {
+    setLoading(true);
+    loadSystems(page).catch(failure).finally(() => setLoading(false));
+  }
+  function selectTheme(next: Theme) {
+    setTheme(next);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, next);
+    } catch {
+      // Preferência visual é opcional quando o armazenamento não está disponível.
+    }
+  }
+  function vulnerabilityUpdated(value: VulnerabilityResponse) {
+    setResult((current) => current ? {
+      ...current,
+      findings: current.findings.map((finding) => finding.vulnerabilityCode === value.code
+        ? { ...finding, vulnerabilityStatus: value.status, vulnerabilityVersion: value.version }
+        : finding),
+    } : current);
+  }
+  if (!ready || !localeReady)
+    return (
+      <main className="app-shell startup" data-theme={theme}>
+        <Processing restoring />
+      </main>
+    );
+  if (!session)
+    return (
+      <main className="login-app" data-theme={theme}>
+        <Login
+          onLogin={login}
+          onRegister={register}
+          initialRegistering={path === "/cadastro"}
+          onToggleMode={() => navigate(path === "/cadastro" ? "/login" : "/cadastro", true)}
+          success={success}
+          error={error}
+        />
+      </main>
+    );
+  return (
+    <div className="app-shell" data-theme={theme}>
+      <header className="topbar">
+        <a
+          className="brand"
+          href="/dashboard"
+          onClick={(e) => {
+            e.preventDefault();
+            if (!loading) dashboard();
+          }}
+        >
+          <FisastLogo />
+          <span className="brand-subtitle">Plataforma SAST</span>
+        </a>
+        <nav className="topnav" aria-label={t("Navegação principal")}>
+          <a ref={dashboardLinkRef} className={path === "/dashboard" ? "active" : ""} href="/dashboard" onClick={(event) => { event.preventDefault(); dashboard(); }}>Dashboard</a>
+          <a className={path === "/analyses/new" ? "active" : ""} href="/analyses/new" onClick={(event) => { event.preventDefault(); newAnalysis(); }}>{t("Nova análise")}</a>
+        </nav>
+        <div className="account">
+          <span>{session.email}</span>
+          <div className="theme-switcher" role="group" aria-label={t("Tema da interface")}>
+            <button
+              className="theme-option"
+              type="button"
+              aria-label={t("Tema claro")}
+              aria-pressed={theme === "light"}
+              onClick={() => selectTheme("light")}
+            >
+              <span aria-hidden="true">☀</span>
+              <span className="theme-option-label">{t("Claro")}</span>
+            </button>
+            <button
+              className="theme-option"
+              type="button"
+              aria-label={t("Tema escuro")}
+              aria-pressed={theme === "dark"}
+              onClick={() => selectTheme("dark")}
+            >
+              <span aria-hidden="true">☾</span>
+              <span className="theme-option-label">{t("Escuro")}</span>
+            </button>
+          </div>
+          <button className="text-button" onClick={logout} disabled={loading}>
+            {t("Sair")} <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </header>
+      {path.startsWith("/analyses") && (
+        <AnalysisNotificationCenter notifications={analysisNotifications} announcement={notificationAnnouncement} onDismiss={dismissNotification} />
+      )}
+      <main className="workspace">
+        {path === "/dashboard" ? (
+          systems ? <Dashboard systems={systems} central onOpen={() => undefined} onOpenSystem={openSystem} onPage={changeSystemsPage} /> : <section className="panel system-page-loading" role="status">{t("Carregando sistemas analisados…")}</section>
+        ) : path.match(/^\/systems\/[^/]+\/[^/]+$/) && result ? (
+          <SystemDashboard data={result} history={systemHistory} totalHistory={systemHistoryTotal} loading={systemUpdating} onSelect={(id) => { if (id === result.analysisId) return; setSystemUpdating(true); api.analysis(id).then(setResult).catch(failure).finally(() => setSystemUpdating(false)); }} onMore={loadMoreSystemHistory} hasMore={systemHistory.length < systemHistoryTotal} onBack={() => navigate("/dashboard")} onNavigate={(href) => navigate(href)} onOpen={() => navigate(`/analyses/${result.analysisId}`)} />
+        ) : path.match(/^\/systems\/[^/]+\/[^/]+$/) ? (
+          <section className="panel system-page-loading" role="status">{t("Carregando dashboard do sistema…")}</section>
+        ) : path === "/analyses/new" ? (
+          <AnalysisForm onSubmit={create} error={error} busy={submitting} onNavigate={(href) => navigate(href)} />
+        ) : result ? (
+          <>
+            <ErrorMessage message={error} />
+            <Results data={result} onNavigate={(href) => navigate(href)} onVulnerabilityUpdated={vulnerabilityUpdated} />
+          </>
+        ) : (
+          <section className="panel">
+            <h1>{t("Não foi possível abrir a análise")}</h1>
+            <ErrorMessage message={error} />
+          </section>
+        )}
+      </main>
+      {result?.status === "FAILED" && analysisFailureOpen && (
+        <AnalysisFailureModal
+          data={result}
+          onClose={() => setAnalysisFailureOpen(false)}
+          onNew={newAnalysis}
+        />
+      )}
+      {dashboardPromptOpen && (
+        <DashboardPrompt
+          onClose={() => {
+            setDashboardPromptOpen(false);
+            requestAnimationFrame(() => dashboardLinkRef.current?.focus());
+          }}
+          onNew={newAnalysis}
+        />
+      )}
+      <footer className="app-footer">
+        <span>FISAST / Plataforma SAST</span>
+        <span>{t("Fundação & Parsers · CP1")}</span>
+      </footer>
+    </div>
+  );
+}

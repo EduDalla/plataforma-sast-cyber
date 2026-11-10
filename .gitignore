@@ -1,0 +1,12 @@
+.env
+**/target/
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/*.tsbuildinfo
+.idea/
+.vscode/
+TestResults/
+__pycache__/
+*.py[cod]
