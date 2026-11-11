@@ -79,7 +79,21 @@ export function App() {
   const [analysisFailureOpen, setAnalysisFailureOpen] = useState(false);
   const [analysisNotifications, setAnalysisNotifications] = useState<AnalysisNotification[]>([]);
   const [notificationAnnouncement, setNotificationAnnouncement] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
   const dashboardLinkRef = useRef<HTMLAnchorElement>(null);
+  const menuToggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => setMenuOpen(false), [path]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      menuToggleRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
   const pending = useRef(false);
   const generation = useRef(0);
   const upsertNotification = useCallback((notification: AnalysisNotification) => {
@@ -471,10 +485,23 @@ export function App() {
           <FisastLogo />
           <span className="brand-subtitle">Plataforma SAST</span>
         </a>
+        <button
+          ref={menuToggleRef}
+          className="menu-toggle"
+          type="button"
+          aria-label={menuOpen ? t("Fechar menu") : t("Abrir menu")}
+          aria-expanded={menuOpen}
+          aria-controls="topbar-menu"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span className="menu-toggle-bars" aria-hidden="true" />
+        </button>
+        <div id="topbar-menu" className={`topbar-menu${menuOpen ? " open" : ""}`}>
         <nav className="topnav" aria-label={t("Navegação principal")}>
-          <a ref={dashboardLinkRef} className={path === "/dashboard" ? "active" : ""} href="/dashboard" onClick={(event) => { event.preventDefault(); dashboard(); }}>Dashboard</a>
-          <a className={path === "/analyses/new" ? "active" : ""} href="/analyses/new" onClick={(event) => { event.preventDefault(); newAnalysis(); }}>{t("Nova análise")}</a>
+          <a ref={dashboardLinkRef} className={path === "/dashboard" ? "active" : ""} href="/dashboard" onClick={(event) => { event.preventDefault(); setMenuOpen(false); dashboard(); }}>Dashboard</a>
+          <a className={path === "/analyses/new" ? "active" : ""} href="/analyses/new" onClick={(event) => { event.preventDefault(); setMenuOpen(false); newAnalysis(); }}>{t("Nova análise")}</a>
         </nav>
+        </div>
         <div className="account">
           <span>Demonstração · {session.email}</span>
           <div className="theme-switcher" role="group" aria-label={t("Tema da interface")}>
@@ -485,7 +512,7 @@ export function App() {
               aria-pressed={theme === "light"}
               onClick={() => selectTheme("light")}
             >
-              <span aria-hidden="true">☀</span>
+              <svg className="theme-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
               <span className="theme-option-label">{t("Claro")}</span>
             </button>
             <button
@@ -495,7 +522,7 @@ export function App() {
               aria-pressed={theme === "dark"}
               onClick={() => selectTheme("dark")}
             >
-              <span aria-hidden="true">☾</span>
+              <svg className="theme-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" /></svg>
               <span className="theme-option-label">{t("Escuro")}</span>
             </button>
           </div>
@@ -504,6 +531,7 @@ export function App() {
           </button>
         </div>
       </header>
+      {menuOpen && <div className="menu-backdrop" aria-hidden="true" onClick={() => setMenuOpen(false)} />}
       {path.startsWith("/analyses") && (
         <AnalysisNotificationCenter notifications={analysisNotifications} announcement={notificationAnnouncement} onDismiss={dismissNotification} />
       )}

@@ -34,6 +34,8 @@ const messages: Record<string, string> = {
   "Entrando…": "Signing in…",
   "Criar conta": "Create account",
   "Entrar": "Sign in",
+  "Abrir menu": "Open menu",
+  "Fechar menu": "Close menu",
   "Já possui uma conta?": "Already have an account?",
   "Ainda não possui uma conta?": "Don't have an account yet?",
   "Criar cadastro": "Sign up",

@@ -98,3 +98,17 @@
 .page-heading {
   margin-bottom: 35px;
 }
+
+/* Menu hambúrguer: no desktop o conteúdo do menu segue no fluxo do header. */
+.topbar-menu {
+  display: contents;
+}
+.menu-toggle,
+.menu-backdrop {
+  display: none;
+}
+.theme-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
