@@ -19,6 +19,8 @@ No dashboard, abra **projeto-teste** para consultar duas execuções anteriores.
 
 A sessão, o histórico e a auditoria ficam na aba. Recarregar preserva esses dados enquanto o armazenamento de sessão estiver disponível. Fechar a aba encerra a demonstração. O tema segue a preferência local do navegador.
 
+Na Vercel, o arquivo `vercel.json` encaminha as rotas da aplicação para `index.html`. Isso permite abrir diretamente ou recarregar `/login`, `/dashboard` e as páginas de análises, mantendo a URL para o React controlar a navegação e o acesso pela sessão.
+
 ## Verificar
 
 ```sh
